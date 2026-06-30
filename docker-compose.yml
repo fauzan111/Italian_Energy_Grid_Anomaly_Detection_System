@@ -9,3 +9,12 @@ services:
       - ./data:/app/data
       - ./models:/app/models
       - ./reports:/app/reports
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
