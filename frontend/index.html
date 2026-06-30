@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Italian Energy Grid Anomaly Detection System</title>
+    <meta
+      name="description"
+      content="A portfolio-grade anomaly detection platform for Italian electricity grid monitoring with AI, MLOps, and beautiful analytics."
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #050816;
+        --panel: rgba(14, 18, 36, 0.78);
+        --panel-border: rgba(148, 163, 184, 0.16);
+        --text: #e5eefc;
+        --muted: #9fb0ce;
+        --accent: #7c3aed;
+        --accent-2: #06b6d4;
+        --good: #22c55e;
+        --warn: #f59e0b;
+        --bad: #ef4444;
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; min-height: 100%; font-family: Inter, Segoe UI, Arial, sans-serif; background:
+        radial-gradient(circle at top left, rgba(124,58,237,.25), transparent 30%),
+        radial-gradient(circle at top right, rgba(6,182,212,.18), transparent 24%),
+        linear-gradient(180deg, #060816 0%, #050816 55%, #02040d 100%);
+        color: var(--text);
+      }
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+        background-size: 72px 72px;
+        mask-image: radial-gradient(circle at center, black, transparent 82%);
+      }
+      .wrap { position: relative; max-width: 1280px; margin: 0 auto; padding: 28px; }
+      .hero { display: grid; grid-template-columns: 1.3fr .9fr; gap: 24px; align-items: stretch; margin-top: 10px; }
+      .panel { background: var(--panel); border: 1px solid var(--panel-border); backdrop-filter: blur(18px); border-radius: 24px; box-shadow: 0 18px 80px rgba(0,0,0,.35); }
+      .hero-left { padding: 34px; position: relative; overflow: hidden; }
+      .hero-left::after {
+        content:""; position:absolute; inset:auto -80px -120px auto; width:320px; height:320px; border-radius:50%;
+        background: radial-gradient(circle, rgba(6,182,212,.25), transparent 65%);
+      }
+      .eyebrow { display:inline-flex; gap:10px; align-items:center; padding: 8px 14px; border-radius: 999px; background: rgba(124,58,237,.12); border: 1px solid rgba(124,58,237,.25); color:#c4b5fd; font-size: 12px; letter-spacing:.12em; text-transform: uppercase; }
+      h1 { margin: 18px 0 14px; font-size: clamp(38px, 6vw, 68px); line-height: .96; letter-spacing: -.05em; }
+      .lead { color: var(--muted); font-size: 17px; line-height: 1.65; max-width: 68ch; }
+      .actions { display:flex; flex-wrap:wrap; gap:12px; margin-top: 24px; }
+      .btn { display:inline-flex; align-items:center; justify-content:center; gap:10px; padding: 13px 18px; border-radius: 14px; border: 1px solid transparent; text-decoration:none; color: var(--text); font-weight: 700; cursor:pointer; }
+      .btn-primary { background: linear-gradient(135deg, var(--accent), #2563eb); box-shadow: 0 14px 40px rgba(124,58,237,.28); }
+      .btn-secondary { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.08); }
+      .hero-right { padding: 24px; display:grid; gap: 16px; }
+      .status-card { padding: 18px; }
+      .status-row { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+      .pill { display:inline-flex; align-items:center; gap:8px; padding: 7px 12px; border-radius:999px; font-size: 12px; font-weight:700; }
+      .pill.good { background: rgba(34,197,94,.12); color: #86efac; }
+      .pill.warn { background: rgba(245,158,11,.12); color: #fcd34d; }
+      .kpis { display:grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 22px 0; }
+      .kpi { padding: 18px; }
+      .kpi .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing:.12em; }
+      .kpi .value { margin-top: 8px; font-size: 28px; font-weight: 800; }
+      .grid { display:grid; grid-template-columns: 1.2fr .8fr; gap: 18px; margin-top: 18px; }
+      .section { padding: 22px; }
+      .section h2 { margin: 0 0 10px; font-size: 22px; }
+      .section p { margin: 0; color: var(--muted); line-height: 1.65; }
+      .metrics { display:grid; gap: 12px; margin-top: 18px; }
+      .metric-row { display:flex; justify-content:space-between; gap: 14px; padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,.07); }
+      .metric-row:last-child { border-bottom: 0; }
+      .metric-row strong { display:block; font-size: 14px; }
+      .metric-row span { color: var(--muted); font-size: 13px; }
+      .chart-box { padding: 20px; }
+      .chart-head { display:flex; justify-content:space-between; align-items:end; gap:12px; margin-bottom: 16px; }
+      .chart-head small { color: var(--muted); }
+      .two-col { display:grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin-top: 18px; }
+      .timeline { display:grid; gap: 14px; margin-top: 10px; }
+      .event { padding: 14px 16px; border-radius: 16px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.06); display:flex; justify-content:space-between; gap:14px; }
+      .event b { display:block; }
+      .event small, .footer { color: var(--muted); }
+      .footer { margin: 22px 0 8px; text-align:center; font-size: 13px; }
+      input {
+        width:100%; padding: 14px 16px; border-radius: 14px; border: 1px solid rgba(255,255,255,.09);
+        background: rgba(0,0,0,.24); color: var(--text); outline: none;
+      }
+      .form { display:grid; gap: 10px; }
+      .form label { font-size: 13px; color: var(--muted); }
+      pre {
+        margin: 0; white-space: pre-wrap; word-break: break-word; padding: 14px 16px; border-radius: 14px;
+        background: rgba(0,0,0,.26); border: 1px solid rgba(255,255,255,.07); color: #cbd5e1;
+      }
+      @media (max-width: 980px) {
+        .hero, .grid, .two-col, .kpis { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <section class="hero">
+        <div class="panel hero-left">
+          <div class="eyebrow">Italian Grid Intelligence • MLOps • Portfolio-Grade</div>
+          <h1>Detect electrical grid anomalies before faults happen.</h1>
+          <p class="lead">
+            A production-style anomaly detection platform for TERNA/GSE time-series data with hybrid LSTM + Isolation Forest modeling,
+            fast inference, drift monitoring, and retraining workflows.
+          </p>
+          <div class="actions">
+            <a class="btn btn-primary" href="#dashboard">Open dashboard</a>
+            <a class="btn btn-secondary" href="#api">Connect backend</a>
+          </div>
+        </div>
+        <div class="panel hero-right">
+          <div class="status-card panel">
+            <div class="status-row">
+              <div>
+                <div style="color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.12em;">API status</div>
+                <h3 id="apiStatus" style="margin:8px 0 0">Checking...</h3>
+              </div>
+              <span id="apiPill" class="pill warn">Offline</span>
+            </div>
+          </div>
+          <div class="panel status-card">
+            <div style="color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.12em;">Model summary</div>
+            <div class="metrics">
+              <div class="metric-row"><div><strong>Sequence length</strong><span id="seqLength">-</span></div><div class="pill good">LSTM</div></div>
+              <div class="metric-row"><div><strong>Threshold</strong><span id="threshold">-</span></div><div class="pill good">IForest</div></div>
+              <div class="metric-row"><div><strong>Features</strong><span id="featureCount">-</span></div><div class="pill good">Telemetry</div></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="kpis">
+        <div class="panel kpi"><div class="label">Data streams</div><div class="value">2</div></div>
+        <div class="panel kpi"><div class="label">Model layers</div><div class="value">Hybrid</div></div>
+        <div class="panel kpi"><div class="label">Monitoring</div><div class="value">Evidently</div></div>
+        <div class="panel kpi"><div class="label">Deployment</div><div class="value">Vercel UI</div></div>
+      </section>
+
+      <section id="dashboard" class="grid">
+        <div class="panel section">
+          <div class="chart-head">
+            <div>
+              <h2>Anomaly score trend</h2>
+              <small>Demo series from TERNA-style grid data</small>
+            </div>
+            <span class="pill good">Live demo</span>
+          </div>
+          <div class="chart-box">
+            <canvas id="trendChart" height="120"></canvas>
+          </div>
+        </div>
+
+        <div class="panel section" id="api">
+          <h2>Backend connection</h2>
+          <p>Point this UI at your FastAPI backend to run live predictions and retraining.</p>
+          <div class="form" style="margin-top:14px;">
+            <label for="apiUrl">API URL</label>
+            <input id="apiUrl" placeholder="http://127.0.0.1:8000" />
+            <div class="actions" style="margin-top:6px;">
+              <button class="btn btn-primary" id="saveApi">Save</button>
+              <button class="btn btn-secondary" id="testApi">Test API</button>
+            </div>
+          </div>
+          <div style="margin-top:14px;">
+            <h3 style="margin:0 0 10px;">Latest response</h3>
+            <pre id="apiOutput">No request yet.</pre>
+          </div>
+        </div>
+      </section>
+
+      <section class="two-col">
+        <div class="panel section">
+          <h2>What this system does</h2>
+          <div class="timeline">
+            <div class="event"><div><b>Ingest</b><small>Downloads TERNA load and generation time series.</small></div><small>step 1</small></div>
+            <div class="event"><div><b>Train</b><small>Fits an LSTM autoencoder and Isolation Forest on engineered features.</small></div><small>step 2</small></div>
+            <div class="event"><div><b>Serve</b><small>FastAPI exposes /predict, /model/info, /retrain.</small></div><small>step 3</small></div>
+            <div class="event"><div><b>Monitor</b><small>Evidently drift checks and retraining orchestration.</small></div><small>step 4</small></div>
+          </div>
+        </div>
+        <div class="panel section">
+          <h2>Interview-ready architecture</h2>
+          <pre>
+TERNA/GSE data → feature engineering → LSTM encoder
+                              ↘ Isolation Forest scoring
+API layer → live predictions → drift monitoring → retraining
+          </pre>
+          <p style="margin-top:12px;">Built to show the full loop: train, deploy, monitor, retrain.</p>
+        </div>
+      </section>
+
+      <div class="footer">Italian Energy Grid Anomaly Detection System • Vercel-ready frontend • FastAPI backend compatible</div>
+    </div>
+
+    <script>
+      const demo = {
+        labels: ["00:00","02:00","04:00","06:00","08:00","10:00","12:00","14:00","16:00","18:00","20:00","22:00"],
+        load: [18.4,17.8,17.1,18.5,21.2,24.8,27.5,26.8,24.9,23.7,22.1,19.8],
+        generation: [17.5,16.9,16.1,16.6,19.5,23.7,26.2,25.8,23.9,22.8,21.4,19.1],
+        anomaly: [0.12,0.14,0.18,0.19,0.25,0.28,0.34,0.31,0.22,0.2,0.16,0.13]
+      };
+
+      const ctx = document.getElementById("trendChart");
+      new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: demo.labels,
+          datasets: [
+            { label: "Load", data: demo.load, borderColor: "#7c3aed", tension: 0.35, fill: false },
+            { label: "Generation", data: demo.generation, borderColor: "#06b6d4", tension: 0.35, fill: false },
+            { label: "Anomaly score", data: demo.anomaly, borderColor: "#f59e0b", tension: 0.35, yAxisID: "y1", fill: false }
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: { grid: { color: "rgba(255,255,255,.06)" }, ticks: { color: "#9fb0ce" } },
+            y1: { position: "right", grid: { drawOnChartArea: false }, ticks: { color: "#9fb0ce" } },
+            x: { grid: { color: "rgba(255,255,255,.04)" }, ticks: { color: "#9fb0ce" } }
+          },
+          plugins: { legend: { labels: { color: "#e5eefc" } } }
+        }
+      });
+
+      const apiUrl = document.getElementById("apiUrl");
+      const apiOutput = document.getElementById("apiOutput");
+      const apiPill = document.getElementById("apiPill");
+      const apiStatus = document.getElementById("apiStatus");
+      const saveApi = document.getElementById("saveApi");
+      const testApi = document.getElementById("testApi");
+      const seqLength = document.getElementById("seqLength");
+      const threshold = document.getElementById("threshold");
+      const featureCount = document.getElementById("featureCount");
+
+      apiUrl.value = localStorage.getItem("apiUrl") || "http://127.0.0.1:8000";
+      async function requestJson(url, options) {
+        const response = await fetch(url, options);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      }
+      async function refreshStatus() {
+        try {
+          const health = await requestJson(`${apiUrl.value}/health`);
+          apiPill.textContent = health.status === "ok" ? "Online" : "Unknown";
+          apiPill.className = "pill good";
+          apiStatus.textContent = "Backend reachable";
+          const info = await requestJson(`${apiUrl.value}/model/info`);
+          seqLength.textContent = info.seq_length ?? "-";
+          threshold.textContent = info.threshold?.toFixed ? info.threshold.toFixed(4) : info.threshold;
+          featureCount.textContent = info.feature_count ?? "-";
+          apiOutput.textContent = JSON.stringify(info, null, 2);
+        } catch (error) {
+          apiPill.textContent = "Offline";
+          apiPill.className = "pill warn";
+          apiStatus.textContent = "Demo mode active";
+          seqLength.textContent = "24";
+          threshold.textContent = "0.2500";
+          featureCount.textContent = "14";
+          apiOutput.textContent = "Backend not connected. Enter your API URL to enable live predictions.";
+        }
+      }
+      saveApi.onclick = () => {
+        localStorage.setItem("apiUrl", apiUrl.value.trim());
+        refreshStatus();
+      };
+      testApi.onclick = async () => {
+        try {
+          const payload = {
+            records: demo.labels.map((label, i) => ({
+              timestamp: `2025-01-01T${label}:00`,
+              total_load_mw: demo.load[i] * 1000,
+              forecast_total_load_mw: demo.load[i] * 990,
+              actual_generation_mw: demo.generation[i] * 1000,
+              load_gap_mw: demo.load[i] * 10,
+              load_gap_pct: 0.05,
+              hour: i * 2,
+              day_of_week: 2,
+              day_of_year: 1,
+              month: 1,
+              is_weekend: 0,
+              hour_sin: Math.sin(i),
+              hour_cos: Math.cos(i)
+            }))
+          };
+          const result = await requestJson(`${apiUrl.value}/predict`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+          });
+          apiOutput.textContent = JSON.stringify(result, null, 2);
+        } catch (error) {
+          apiOutput.textContent = `Prediction request failed: ${error.message}`;
+        }
+      };
+      refreshStatus();
+    </script>
+  </body>
+</html>

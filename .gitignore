@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.coverage
+dist/
+build/
+*.egg-info/
+.env
+mlruns/
+airflow/logs/
+models/
+reports/
+data/processed/
+data/raw/
