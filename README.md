@@ -1,32 +1,32 @@
 # Grid Anomaly Detection
 
-Production-grade starter for anomaly detection on Italian electricity grid data.
+Production-grade anomaly detection for Italian electricity grid data with a React + Node.js frontend and FastAPI backend.
 
 ## Stack
-- Python
+- React + Vite
+- Node.js tooling
+- Python / FastAPI
 - LSTM + Isolation Forest
 - MLflow
 - Evidently AI
 - Apache Airflow
-- FastAPI
 - Docker
 - GitHub Actions
-- Vercel static frontend
+- Vercel-ready dashboard
 
 ## Structure
-- `src/anomaly_detection/` - application code
+- `frontend/` - React UI
+- `src/anomaly_detection/` - backend API and ML code
 - `airflow/dags/` - retraining workflows
-- `tests/` - automated tests
+- `scripts/` - download/train/check commands
 - `data/raw/terna/` - downloaded TERNA source data
-- `scripts/download_terna_data.py` - repeatable data fetcher
-- `frontend/index.html` - Vercel-ready dashboard
 
 ## Run locally
-1. `python scripts/download_terna_data.py`
-2. `python scripts/train_model.py --max-rows 5000 --epochs 1`
-3. `uvicorn anomaly_detection.api.main:app --reload`
-4. `docker compose up --build`
+1. `npm install`
+2. `npm run dev`
+3. In another terminal: `python scripts\\train_model.py --max-rows 5000 --epochs 1`
 
 ## Vercel
-- Deploy the `frontend/` folder as a static site.
-- Point the dashboard at your hosted FastAPI backend URL.
+- Deploy the repository as a Vercel project.
+- The React app builds from `frontend/`.
+- Set `VITE_API_BASE_URL` to your hosted FastAPI backend.
