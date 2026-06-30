@@ -14,7 +14,7 @@ function StatCard({ label, value, hint }) {
   );
 }
 
-function Sparkline({ data, stroke = "#7c3aed" }) {
+function Sparkline({ data, stroke = "#06b6d4" }) {
   const points = useMemo(() => {
     const values = data.map((d) => d.score ?? d.anomaly_score ?? 0);
     const min = Math.min(...values);
@@ -32,7 +32,16 @@ function Sparkline({ data, stroke = "#7c3aed" }) {
 
   return (
     <svg viewBox="0 0 100 28" preserveAspectRatio="none" className="sparkline">
-      <polyline points={points} fill="none" stroke={stroke} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <defs>
+        <filter id="glow-filter" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="1.5" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+      <polyline points={points} fill="none" stroke={stroke} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" filter="url(#glow-filter)" />
     </svg>
   );
 }
@@ -120,7 +129,7 @@ export default function App() {
     <div className="page-shell">
       <header className="hero">
         <div className="hero-copy card">
-          <div className="eyebrow">React + Node.js • Italian Grid Intelligence</div>
+          <div className="eyebrow"><span className="pulse-dot"></span> Italian Grid Intelligence System</div>
           <h1>Detect electrical grid anomalies before faults happen.</h1>
           <p>
             A production-style anomaly detection platform for TERNA/GSE time-series data with hybrid LSTM + Isolation Forest modeling,
